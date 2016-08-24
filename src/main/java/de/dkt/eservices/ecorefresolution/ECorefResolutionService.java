@@ -57,8 +57,7 @@ public class ECorefResolutionService {
 		
 			if (languageParam.equals("en")) {
 				//all is well
-				// add clause for de here when implemented
-			} else {
+			} else {// add clause for de here when implemented
 				logger.error("Unsupported language:" + languageParam);
 				throw new BadRequestException("Unsupported language:" + languageParam);
 			}
