@@ -2,66 +2,71 @@ package de.dkt.eservices.ecorefresolution.modules;
 
 import edu.stanford.nlp.hcoref.CorefCoreAnnotations;
 import edu.stanford.nlp.hcoref.data.CorefChain;
-import edu.stanford.nlp.hcoref.data.Mention;
+import edu.stanford.nlp.hcoref.data.CorefChain.CorefMention;
 import edu.stanford.nlp.ling.CoreAnnotations;
+import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
-import edu.stanford.nlp.util.CoreMap;
+import edu.stanford.nlp.util.IntPair;
 import eu.freme.common.conversion.rdf.RDFConstants.RDFSerialization;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 import com.hp.hpl.jena.rdf.model.Model;
 
 import de.dkt.common.niftools.NIFReader;
+import de.dkt.common.niftools.NIFWriter;
+
 
 public class Corefinizer {
 	 public static void main(String[] args) throws Exception {
-		 
-		 String nifString = "@prefix dktnif: <http://dkt.dfki.de/ontologies/nif#> .\n" +
-			      "@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n" +
-			      "@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .\n" +
-			      "@prefix itsrdf: <http://www.w3.org/2005/11/its/rdf#> .\n" +
-			      "@prefix nif:   <http://persistence.uni-leipzig.org/nlp2rdf/ontologies/nif-core#> .\n" +
-			      "@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .\n" +
-			      "\n" +
-			      "<http://dkt.dfki.de/documents/#char=0,298>\n" +
-			      "        a               nif:RFC5147String , nif:String , nif:Context ;\n" +
-			      "        nif:beginIndex  \"0\"^^xsd:nonNegativeInteger ;\n" +
-			      "        nif:endIndex    \"298\"^^xsd:nonNegativeInteger ;\n" +
-			      "        nif:isString    \"Pierre Vinken, 61 years old, will join the board as a nonexecutive director Nov. 29.\\r\\nMr. Vinken is chairman of Elsevier N.V., the Dutch publishing group.\\r\\nRudolph Agnew, 55 years old and former chairman of Consolidated Gold Fields PLC, was named a director of this British industrial conglomerate.\"^^xsd:string .\n" +
-			      "\n" +
-			      "<http://dkt.dfki.de/documents/#char=0,13>\n" +
-			      "        a                     nif:RFC5147String , nif:String ;\n" +
-			      "        nif:anchorOf          \"Pierre Vinken\"^^xsd:string ;\n" +
-			      "        nif:beginIndex        \"0\"^^xsd:nonNegativeInteger ;\n" +
-			      "        nif:endIndex          \"13\"^^xsd:nonNegativeInteger ;\n" +
-			      "        nif:referenceContext  <http://dkt.dfki.de/documents/#char=0,298> ;\n" +
-			      "        itsrdf:taClassRef     <http://dbpedia.org/ontology/Person> .\n" +
-			      "\n" +
-			      "<http://dkt.dfki.de/documents/#char=156,169>\n" +
-			      "        a                     nif:RFC5147String , nif:String ;\n" +
-			      "        nif:anchorOf          \"Rudolph Agnew\"^^xsd:string ;\n" +
-			      "        nif:beginIndex        \"156\"^^xsd:nonNegativeInteger ;\n" +
-			      "        nif:endIndex          \"169\"^^xsd:nonNegativeInteger ;\n" +
-			      "        nif:referenceContext  <http://dkt.dfki.de/documents/#char=0,298> ;\n" +
-			      "        itsrdf:taClassRef     <http://dbpedia.org/ontology/Person> .\n" +
-			      "";
-			    
-			    
-			  
-			  Model nifModel;
-			  try {
-			   nifModel = NIFReader.extractModelFromFormatString(nifString, RDFSerialization.TURTLE);
-			   resolveCoreferencesNIF(nifModel);
-			  } catch (Exception e) {
-			   // TODO Auto-generated catch block
-			   e.printStackTrace();
-			  }
 
-			  
+		String nifString = "@prefix dktnif: <http://dkt.dfki.de/ontologies/nif#> .\n"
+				+ "@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n"
+				+ "@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .\n"
+				+ "@prefix itsrdf: <http://www.w3.org/2005/11/its/rdf#> .\n"
+				+ "@prefix nif:   <http://persistence.uni-leipzig.org/nlp2rdf/ontologies/nif-core#> .\n"
+				+ "@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .\n" + "\n"
+				+ "<http://dkt.dfki.de/documents/#char=0,298>\n"
+				+ "        a               nif:RFC5147String , nif:String , nif:Context ;\n"
+				+ "        nif:beginIndex  \"0\"^^xsd:nonNegativeInteger ;\n"
+				+ "        nif:endIndex    \"298\"^^xsd:nonNegativeInteger ;\n"
+				+ "        nif:isString    \"Pierre Vinken, 61 years old, will join the board as a nonexecutive director Nov. 29.\\r\\nMr. Vinken is chairman of Elsevier N.V., the Dutch publishing group.\\r\\nRudolph Agnew, 55 years old and former chairman of Consolidated Gold Fields PLC, was named a director of this British industrial conglomerate.\"^^xsd:string .\n"
+				+ "\n" + "<http://dkt.dfki.de/documents/#char=0,13>\n"
+				+ "        a                     nif:RFC5147String , nif:String ;\n"
+				+ "        nif:anchorOf          \"Pierre Vinken\"^^xsd:string ;\n"
+				+ "        nif:beginIndex        \"0\"^^xsd:nonNegativeInteger ;\n"
+				+ "        nif:endIndex          \"13\"^^xsd:nonNegativeInteger ;\n"
+				+ "        nif:referenceContext  <http://dkt.dfki.de/documents/#char=0,298> ;\n"
+				+ "        itsrdf:taClassRef     <http://dbpedia.org/ontology/Person> .\n" + "\n"
+				+ "\n" + "<http://dkt.dfki.de/documents/#char=112,125>\n"
+				+ "        a                     nif:RFC5147String , nif:String ;\n"
+				+ "        nif:anchorOf          \"Elsevier N.V.\"^^xsd:string ;\n"
+				+ "        nif:beginIndex        \"112\"^^xsd:nonNegativeInteger ;\n"
+				+ "        nif:endIndex          \"125\"^^xsd:nonNegativeInteger ;\n"
+				+ "        nif:referenceContext  <http://dkt.dfki.de/documents/#char=0,298> ;\n"
+				+ "        itsrdf:taClassRef     <http://dbpedia.org/ontology/Organization> .\n" + "\n"
+				+ "<http://dkt.dfki.de/documents/#char=156,169>\n"
+				+ "        a                     nif:RFC5147String , nif:String ;\n"
+				+ "        nif:anchorOf          \"Rudolph Agnew\"^^xsd:string ;\n"
+				+ "        nif:beginIndex        \"156\"^^xsd:nonNegativeInteger ;\n"
+				+ "        nif:endIndex          \"169\"^^xsd:nonNegativeInteger ;\n"
+				+ "        nif:referenceContext  <http://dkt.dfki.de/documents/#char=0,298> ;\n"
+				+ "        itsrdf:taClassRef     <http://dbpedia.org/ontology/Person> .\n" + "";
+			    
+		try {
+			Model nifModel = NIFReader.extractModelFromFormatString(nifString, RDFSerialization.TURTLE);
+			System.out.println("NIFMODEL before:\n" + NIFReader.model2String(nifModel, RDFSerialization.TURTLE));
+			nifModel = resolveCoreferencesNIF(nifModel);
+			System.out.println("NIFMODEL after:\n" + NIFReader.model2String(nifModel, RDFSerialization.TURTLE));
 			
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 			  
 			  
 		 /*Annotation document = new Annotation("When Harald was seven months old he cut his first tooth. Then his father "
@@ -97,8 +102,10 @@ public class Corefinizer {
 		       }
 		    }
 		  */}
+	
 
-	private static void resolveCoreferencesNIF(Model nifModel) {
+
+	public static Model resolveCoreferencesNIF(Model nifModel) {
 		
 		 Annotation document = new Annotation(NIFReader.extractIsString(nifModel));   
 		 Properties props = new Properties();
@@ -107,31 +114,58 @@ public class Corefinizer {
 		    //props.setProperty("coref.md.type", "hybrid");
 		    StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
 		    pipeline.annotate(document);
-		    System.out.println("---");
-		    System.out.println("coref chains");
-		    for (CorefChain cc : document.get(CorefCoreAnnotations.CorefChainAnnotation.class).values()) {
-		      System.out.println("\t"+cc);
+
+		    List<String[]> ents = NIFReader.extractEntityIndices(nifModel);
+		    if (ents == null){
+		    	return nifModel; // in this case we do not want to do anything, just return the current model
 		    }
-		    for (CoreMap sentence : document.get(CoreAnnotations.SentencesAnnotation.class)) {
-		      System.out.println("---");
-		      System.out.println("mentions");
-		      for (Mention m : sentence.get(CorefCoreAnnotations.CorefMentionsAnnotation.class)) {
-		        System.out.println("\t"+m);
-		       }
+			   /*
+			    * 0:ITSRDF.taClassRef
+			    * 1:anchorOf
+			    * 2:taIdentRef
+			    * 3:beginIndex
+			    * 4:endIndex
+			    */
+		    // converting this to hashmap structure with indices as key, so we don't have to loop through it everytime for every coreference mention, but can check if it is in the hash right away
+		    HashMap<String, String> entIndexMap = new HashMap<String, String>();
+		    for (String[] sa : ents){
+		    	entIndexMap.put(sa[3] + "_" + sa[4], sa[1]);
 		    }
 		    
-		    //find sentence index of a reference, find word index of a reference. The length of the sentences to find out where a word is
-		    //on document level. CorefDestAnnotation
-		
-		  List<String[]> ents = NIFReader.extractEntityIndices(nifModel);
-		   /*
-		    * 0:ITSRDF.taClassRef
-		    * 1:anchorOf
-		    * 2:taIdentRef
-		    * 3:beginIndex
-		    * 4:endIndex
-		    */
-		
+		    for (CorefChain cc : document.get(CorefCoreAnnotations.CorefChainAnnotation.class).values()){
+		    	for (IntPair key : cc.getMentionMap().keySet()){
+		    		Set<CorefMention> set = cc.getMentionMap().get(key);
+		    		if (set.size() > 1){ // we only want chains with more than one element, otherwise there is nothing to refer to
+		    			String existingIndex = null;
+		    			for (CorefMention cm : set){ // first pass is to check if there is a recognized entity in this coref chain
+		    				List<CoreLabel> tokens = document.get(CoreAnnotations.SentencesAnnotation.class).get(cm.sentNum-1).get(CoreAnnotations.TokensAnnotation.class);
+		    				int startIndex = tokens.get(cm.startIndex-1).beginPosition();
+		    				int endIndex = startIndex + cm.mentionSpan.length();
+		    				if (entIndexMap.containsKey(startIndex + "_" + endIndex)){
+		    					existingIndex = startIndex + "_" + endIndex;
+		    				}
+		    			}
+		    			if (existingIndex != null){ // second pass; if there was a matching entity, link them
+		    				for (CorefMention cm : set){
+		    					List<CoreLabel> tokens = document.get(CoreAnnotations.SentencesAnnotation.class).get(cm.sentNum-1).get(CoreAnnotations.TokensAnnotation.class);
+			    				int startIndex = tokens.get(cm.startIndex-1).beginPosition();
+			    				int endIndex = startIndex + cm.mentionSpan.length();
+			    				if (entIndexMap.containsKey(startIndex + "_" + endIndex)){
+			    					// skip, this one is in the nif already
+			    				}
+			    				else{
+			    					String existingEntityURI = NIFReader.extractDocumentURI(nifModel) + "#char=" + existingIndex.split("_")[0] + "," + existingIndex.split("_")[1]; // TODO: fix this. This will probably outdated again once we move to NIF 2.1 and is quite a hacky way of retrieving an entity URI. Should be a neat way of getting that, so use that!
+			    					NIFWriter.addCoreferenceAnnotation(nifModel, startIndex, endIndex, cm.mentionSpan, existingEntityURI);
+			    				}
+		    				}
+		    			}
+		    		}
+		    		
+		    	}
+		    	
+		    }
+		    
+		return nifModel;
 	}
 
 }

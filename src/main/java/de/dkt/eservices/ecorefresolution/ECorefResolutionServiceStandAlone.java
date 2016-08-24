@@ -1,5 +1,6 @@
 package de.dkt.eservices.ecorefresolution;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -15,6 +16,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.ResIterator;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.vocabulary.OWL;
+import com.hp.hpl.jena.vocabulary.RDF;
 
 import de.dkt.common.feedback.InteractionManagement;
 import de.dkt.common.tools.ParameterChecker;
@@ -33,7 +42,7 @@ public class ECorefResolutionServiceStandAlone extends BaseRestController {
 	@Autowired
 	ECorefResolutionService service;
 
-	@RequestMapping(value = "/e-sesame/testURL", method = { RequestMethod.POST, RequestMethod.GET })
+	@RequestMapping(value = "/e-nlp/testURL", method = { RequestMethod.POST, RequestMethod.GET })
 	public ResponseEntity<String> testURL(
 			@RequestParam(value = "preffix", required = false) String preffix,
             @RequestBody(required = false) String postBody) throws Exception {
@@ -43,5 +52,94 @@ public class ECorefResolutionServiceStandAlone extends BaseRestController {
     	return response;
 	}
 	
+	
+	@RequestMapping(value = "/e-nlp/CoreferenceResolution", method = {
+            RequestMethod.POST, RequestMethod.GET })
+	public ResponseEntity<String> resolveCoreferences(
+			HttpServletRequest request,
+			@RequestParam(value = "input", required = false) String input,
+			@RequestParam(value = "language", required = false) String language,
+			@RequestParam(value = "i", required = false) String i,
+			@RequestParam(value = "informat", required = false) String informat,
+			@RequestParam(value = "f", required = false) String f,
+			@RequestParam(value = "outformat", required = false) String outformat,
+			@RequestParam(value = "o", required = false) String o,
+			@RequestParam(value = "prefix", required = false) String prefix,
+			@RequestParam(value = "p", required = false) String p,
+			@RequestHeader(value = "Accept", required = false) String acceptHeader,
+			@RequestHeader(value = "Content-Type", required = false) String contentTypeHeader,
+            @RequestParam Map<String, String> allParams,
+            @RequestBody(required = false) String postBody) throws Exception {
+        
+		// Check the language parameter.
+		ParameterChecker.checkInList(language, "en;de", "language", logger);
+        
+		if(allParams.get("input")==null){
+        	allParams.put("input", input);
+        }
+        if(allParams.get("informat")==null){
+        	allParams.put("informat", informat);
+        }
+        if(allParams.get("outformat")==null){
+        	allParams.put("outformat", outformat);
+        }
+        if(allParams.get("prefix")==null){
+        	allParams.put("prefix", prefix);
+        }
+        
+        NIFParameterSet nifParameters = this.normalizeNif(postBody, acceptHeader, contentTypeHeader, allParams, false);
+        
+        Model inModel = ModelFactory.createDefaultModel();
+        
+        String textForProcessing = null;
+        if (nifParameters.getInformat().equals(RDFConstants.RDFSerialization.PLAINTEXT)) {
+        	// input is sent as value of the input parameter
+            textForProcessing = nifParameters.getInput();
+            //rdfConversionService.plaintextToRDF(inModel, textForProcessing,language, nifParameters.getPrefix());
+        } else {
+            //inModel = rdfConversionService.unserializeRDF(nifParameters.getInput(), nifParameters.getInformat());
+        	textForProcessing = nifParameters.getInput();
+        	if (textForProcessing == null){
+        		textForProcessing = postBody;
+        	}
+        	//textForProcessing = postBody;
+            if (textForProcessing == null) {
+    			String msg = "No text to process.";
+    			logger.error(msg);
+    			InteractionManagement.sendInteraction("dkt-usage@"+request.getRemoteAddr(), "error", "/e-nlp/CoreferenceResolution", msg, 
+    					"", "Exception", msg, "");
+    			throw new BadRequestException(msg);
+            }
+        }
+        
+        
+        try {
+        	Model outModel = service.resolveCoreferences(textForProcessing, language, nifParameters.getInformat());
+            outModel.add(inModel);
+            // remove unwanted info
+            //NOTE: don't know why this is here. Commenting it out
+//            outModel.removeAll(null, RDF.type, OWL.ObjectProperty);
+//            outModel.removeAll(null, RDF.type, OWL.DatatypeProperty);
+//            outModel.removeAll(null, RDF.type, OWL.Class);
+//            outModel.removeAll(null, RDF.type, OWL.Class);
+//            ResIterator resIter = outModel.listResourcesWithProperty(RDF.type, outModel.getResource("http://persistence.uni-leipzig.org/nlp2rdf/ontologies/rlog#Entry"));
+//            while (resIter.hasNext()) {
+//                Resource res = resIter.next();
+//                outModel.removeAll(res, null, (RDFNode) null);
+//            }
+    		InteractionManagement.sendInteraction("dkt-usage@"+request.getRemoteAddr(), "usage", "/e-nlp/CoreferenceResolution", "Success", "", "", "", "");
+
+            return createSuccessResponse(outModel, nifParameters.getOutformat());
+            
+        } catch (BadRequestException e) {
+			InteractionManagement.sendInteraction("dkt-usage@"+request.getRemoteAddr(), "error", "/e-nlp/CoreferenceResolution", e.getMessage(), "", "Exception", e.getMessage(), "");
+        	logger.error(e.getMessage());
+            throw e;
+        } catch (ExternalServiceFailedException e) {
+			InteractionManagement.sendInteraction("dkt-usage@"+request.getRemoteAddr(), "error", "/e-nlp/CoreferenceResolution", e.getMessage(), "", "Exception", e.getMessage(), "");
+        	logger.error(e.getMessage());
+            throw e;
+        }
+    }
 	
 }
