@@ -107,7 +107,8 @@ public class Corefinizer {
 
 	public static Model resolveCoreferencesNIF(Model nifModel) {
 		
-		 Annotation document = new Annotation(NIFReader.extractIsString(nifModel));   
+		 String nifString = NIFReader.extractIsString(nifModel);
+		 Annotation document = new Annotation(nifString);   
 		 Properties props = new Properties();
 		    props.setProperty("annotators", "tokenize,ssplit,pos,lemma,ner,parse,mention,dcoref");
 		    //props.setProperty("coref.doClustering", "false");
@@ -156,6 +157,10 @@ public class Corefinizer {
 			    				else{
 			    					String existingEntityURI = NIFReader.extractDocumentURI(nifModel) + "#char=" + existingIndex.split("_")[0] + "," + existingIndex.split("_")[1]; // TODO: fix this. This will probably outdated again once we move to NIF 2.1 and is quite a hacky way of retrieving an entity URI. Should be a neat way of getting that, so use that!
 			    					NIFWriter.addCoreferenceAnnotation(nifModel, startIndex, endIndex, cm.mentionSpan, existingEntityURI);
+			    					System.out.println("referrer:" + cm.mentionSpan);
+			    					System.out.println("referree:" + nifString.substring(Integer.parseInt(existingIndex.split("_")[0]), Integer.parseInt(existingIndex.split("_")[1])));
+			    					System.out.println("in sentence:" + document.get(CoreAnnotations.SentencesAnnotation.class).get(cm.sentNum-1));
+			    					System.out.println("\n");
 			    				}
 		    				}
 		    			}
