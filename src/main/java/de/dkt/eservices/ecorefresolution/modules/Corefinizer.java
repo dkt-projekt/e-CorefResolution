@@ -10,6 +10,7 @@ import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.IntPair;
 import eu.freme.common.conversion.rdf.RDFConstants.RDFSerialization;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
@@ -108,11 +109,22 @@ public class Corefinizer {
 	public static Model resolveCoreferencesNIF(Model nifModel) {
 		
 		 String nifString = NIFReader.extractIsString(nifModel);
+		 //Put separation of string here
+		 //Also store the indexes from where to where the separation goes
+		 //we have to make sure, that only entities from the current batch are considered
+		 List<String> strings = new ArrayList<String>();
+		 int index = 0;
+		 while (index < nifString.length()) {
+		     strings.add(nifString.substring(index, Math.min(index + 50000,nifString.length())));
+		     index += 50000;
+		 }
 		 Annotation document = new Annotation(nifString);   
 		 Properties props = new Properties();
 		    props.setProperty("annotators", "tokenize,ssplit,pos,lemma,ner,parse,mention,dcoref");
 		    //props.setProperty("coref.doClustering", "false");
 		    //props.setProperty("coref.md.type", "hybrid");
+		    props.setProperty("dcoref.maxdist", "3");
+		    props.setProperty("parse.maxlen","70");
 		    StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
 		    pipeline.annotate(document);
 
@@ -161,6 +173,15 @@ public class Corefinizer {
 			    					System.out.println("referree:" + nifString.substring(Integer.parseInt(existingIndex.split("_")[0]), Integer.parseInt(existingIndex.split("_")[1])));
 			    					System.out.println("in sentence:" + document.get(CoreAnnotations.SentencesAnnotation.class).get(cm.sentNum-1));
 			    					System.out.println("\n");
+			    					
+			    		            //System.out.println("in sentence:" + document.get(CoreAnnotations.SentencesAnnotation.class).get(cm.sentNum-1));
+			    		            String temp = "";
+			    		            for (int j  = Integer.max(0, cm.sentNum-1 -3) ; j < Integer.min(document.get(CoreAnnotations.SentencesAnnotation.class).size(), cm.sentNum-1 + 3); j++){
+			    		             temp += document.get(CoreAnnotations.SentencesAnnotation.class).get(j) + "\n";
+			    		            }
+			    		            
+			    		            System.out.println("somewhere in the context of...:" + temp);
+			    		            System.out.println("\n");
 			    				}
 		    				}
 		    			}
