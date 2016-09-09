@@ -127,22 +127,22 @@ public class ECorefResolutionTest {
 			}
 	
 	
-	@Test
-	public void loopTroughCorpus() throws UnirestException, IOException,Exception {
-		
-		PrintStream out = new PrintStream(new FileOutputStream("output.txt"));
-		System.setOut(out);
-		String docFolder = "C:\\Users\\Sabine\\Desktop\\NIFs";
-		File df = new File(docFolder);
-		for (File f : df.listFiles()){
-		
-		System.out.println("Trying to read file:" + f.getAbsolutePath());
-		String fileContent = readFile(f.getAbsolutePath(), StandardCharsets.UTF_8);
-		Model nifModel = NIFReader.extractModelFromFormatString(fileContent, RDFSerialization.TURTLE);
-		Corefinizer.resolveCoreferencesNIF(nifModel);
-		
-		
-		}
+//	@Test
+//	public void loopTroughCorpus() throws UnirestException, IOException,Exception {
+//		
+//		PrintStream out = new PrintStream(new FileOutputStream("output.txt"));
+//		System.setOut(out);
+//		String docFolder = "C:\\Users\\Sabine\\Desktop\\NIFs";
+//		File df = new File(docFolder);
+//		for (File f : df.listFiles()){
+//		
+//		System.out.println("Trying to read file:" + f.getAbsolutePath());
+//		String fileContent = readFile(f.getAbsolutePath(), StandardCharsets.UTF_8);
+//		Model nifModel = NIFReader.extractModelFromFormatString(fileContent, RDFSerialization.TURTLE);
+//		Corefinizer.resolveCoreferencesNIF(nifModel);
+//		
+//		
+//		}
 		
 		/*@Test
 		public void testChunkingOfText() throws UnirestException, IOException,Exception {
@@ -229,7 +229,7 @@ public class ECorefResolutionTest {
 		
 	
 		
-		}
+		//}
 	
 	
 }
