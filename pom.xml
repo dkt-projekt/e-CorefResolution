@@ -16,8 +16,18 @@
 	  <parent>
   		<groupId>eu.freme.e-services</groupId>
   		<artifactId>e-service-parent</artifactId>
-  		<version>0.1</version>
+  		<version>0.9</version>
   	</parent>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>2.5.3</version>
+      </plugin>
+    </plugins>
+  </build>
+
     <dependencies>
   		<dependency>
   			<groupId>eu.freme.bservices</groupId>
@@ -62,7 +72,7 @@
 		<dependency>
 			<groupId>de.dkt</groupId>
 			<artifactId>DKTCommon</artifactId>
-			<version>0.4-SNAPSHOT</version>
+			<version>0.4</version>
 			<exclusions>
 				<exclusion>
 					<groupId>ch.qos.logback</groupId>
@@ -114,9 +124,9 @@
 		</snapshotRepository>
 	</distributionManagement>
         <scm>
-                <connection>scm:git:git@github.com:dkt-projekt/e-Sesame.git</connection>
-                <url>scm:git:git@github.com/dkt-projekt/e-Sesame.git</url>
-                <developerConnection>scm:git:git@github.com:dkt-projekt/e-Sesame.git</developerConnection>
+                <connection>scm:git:git@github.com:dkt-projekt/e-CorefResolution.git</connection>
+                <url>scm:git:git@github.com/dkt-projekt/e-CorefResolution.git</url>
+                <developerConnection>scm:git:git@github.com:dkt-projekt/e-CorefResolution.git</developerConnection>
                 <tag>HEAD</tag>
 </scm>
 </project>
