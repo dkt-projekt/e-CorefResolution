@@ -75,7 +75,7 @@ curl -X POST  -d "@prefix dktnif: <http://dkt.dfki.de/ontologies/nif#> .
         nif:endIndex          "13"^^xsd:nonNegativeInteger ;
         nif:referenceContext  <http://dkt.dfki.de/documents/#char=0,78> ;
         itsrdf:taClassRef     dbo:Person ;
-        itsrdf:taIdentRef     <http://dbpedia.org/resource/Angela_Merkel> ." "http://localhost:8092/e-nlp/CoreferenceResolution?language=en&informat=turtle"
+        itsrdf:taIdentRef     <http://dbpedia.org/resource/Angela_Merkel> ." "http://api.digitale-kuratierung.de/api/e-nlp/CoreferenceResolution?language=en&informat=turtle"
 ```
 
 
