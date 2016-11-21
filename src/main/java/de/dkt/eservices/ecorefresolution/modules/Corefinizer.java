@@ -10,20 +10,32 @@ import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.IntPair;
 import eu.freme.common.conversion.rdf.RDFConstants.RDFSerialization;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
+import org.apache.commons.io.FilenameUtils;
+
 import com.hp.hpl.jena.rdf.model.Model;
 
+import de.dkt.common.niftools.DKTNIF;
 import de.dkt.common.niftools.NIFReader;
 import de.dkt.common.niftools.NIFWriter;
 
 
 public class Corefinizer {
 	 public static void main(String[] args) throws Exception {
+		 
+		 
 
 		String nifString = "@prefix dktnif: <http://dkt.dfki.de/ontologies/nif#> .\n"
 				+ "@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n"
@@ -58,15 +70,26 @@ public class Corefinizer {
 				+ "        nif:referenceContext  <http://dkt.dfki.de/documents/#char=0,298> ;\n"
 				+ "        itsrdf:taClassRef     <http://dbpedia.org/ontology/Person> .\n" + "";
 			    
-		try {
-			Model nifModel = NIFReader.extractModelFromFormatString(nifString, RDFSerialization.TURTLE);
-			System.out.println("NIFMODEL before:\n" + NIFReader.model2String(nifModel, RDFSerialization.TURTLE));
-			nifModel = resolveCoreferencesNIF(nifModel);
-			System.out.println("NIFMODEL after:\n" + NIFReader.model2String(nifModel, RDFSerialization.TURTLE));
-			
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		//String docFolderInput = "C:\\Users\\pebo01\\Desktop\\data\\ARTCOM\\artComSampleFilesDBPediaTimeouts\\outputNifs";
+		String docFolderInput = "C:\\Users\\pebo01\\Desktop\\data\\mendelsohnDocs\\englishNIFsNEROutput";
+		File df = new File(docFolderInput);
+		//String outputFolder = "C:\\Users\\pebo01\\Desktop\\data\\ARTCOM\\artComSampleFilesDBPediaTimeouts\\nifsCorefinized";
+		String outputFolder = "C:\\Users\\pebo01\\Desktop\\data\\mendelsohnDocs\\englishNifsCorefinized";
+		for (File f : df.listFiles()){
+			try {
+				String fileContent = readFile(f.getAbsolutePath(), StandardCharsets.UTF_8);
+				Model nifModel = NIFReader.extractModelFromFormatString(fileContent, RDFSerialization.TURTLE);
+				//System.out.println("NIFMODEL before:\n" + NIFReader.model2String(nifModel, RDFSerialization.TURTLE));
+				nifModel = resolveCoreferencesNIF(nifModel);
+				//System.out.println("NIFMODEL after:\n" + NIFReader.model2String(nifModel, RDFSerialization.TURTLE));
+				PrintWriter out = new PrintWriter(new File(outputFolder, FilenameUtils.removeExtension(f.getName()) + ".nif"));
+				out.println(NIFReader.model2String(nifModel, RDFSerialization.TURTLE));
+				out.close();
+
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 			  
 			  
@@ -105,6 +128,13 @@ public class Corefinizer {
 		  */}
 	
 
+	 
+	 static String readFile(String path, Charset encoding) 
+			  throws IOException 
+			{
+			  byte[] encoded = Files.readAllBytes(Paths.get(path));
+			  return new String(encoded, encoding);
+			}
 
 	public static Model resolveCoreferencesNIF(Model nifModel) {
 		
@@ -112,21 +142,22 @@ public class Corefinizer {
 		 //Put separation of string here
 		 //Also store the indexes from where to where the separation goes
 		 //we have to make sure, that only entities from the current batch are considered
-		 List<String> strings = new ArrayList<String>();
-		 int index = 0;
-		 while (index < nifString.length()) {
-		     strings.add(nifString.substring(index, Math.min(index + 50000,nifString.length())));
-		     index += 50000;
-		 }
+//		 List<String> strings = new ArrayList<String>();
+//		 int index = 0;
+//		 while (index < nifString.length()) {
+//		     strings.add(nifString.substring(index, Math.min(index + 50000,nifString.length())));
+//		     index += 50000;
+//		 }
 		 Annotation document = new Annotation(nifString);   
 		 Properties props = new Properties();
-		    props.setProperty("annotators", "tokenize,ssplit,pos,lemma,ner,parse,mention,dcoref");
-		    //props.setProperty("coref.doClustering", "false");
-		    //props.setProperty("coref.md.type", "hybrid");
-		    props.setProperty("dcoref.maxdist", "3");
-		    props.setProperty("parse.maxlen","70");
-		    StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
-		    pipeline.annotate(document);
+		props.setProperty("annotators", "tokenize,ssplit,pos,lemma,ner,parse,mention,dcoref");
+		// props.setProperty("coref.doClustering", "false");
+		// props.setProperty("coref.md.type", "hybrid");
+		//props.setProperty("dcoref.maxdist", "3");
+		props.setProperty("dcoref.maxdist", "9");
+		props.setProperty("parse.maxlen", "70");
+		StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
+		pipeline.annotate(document);
 
 		    List<String[]> ents = NIFReader.extractEntityIndices(nifModel);
 		    if (ents == null){
@@ -168,20 +199,21 @@ public class Corefinizer {
 			    				}
 			    				else{
 			    					String existingEntityURI = NIFReader.extractDocumentURI(nifModel) + "#char=" + existingIndex.split("_")[0] + "," + existingIndex.split("_")[1]; // TODO: fix this. This will probably outdated again once we move to NIF 2.1 and is quite a hacky way of retrieving an entity URI. Should be a neat way of getting that, so use that!
-			    					NIFWriter.addCoreferenceAnnotation(nifModel, startIndex, endIndex, cm.mentionSpan, existingEntityURI);
+			    					String existingTaIdentRef = NIFReader.extractTaIdentRefWithEntityURI(nifModel, existingEntityURI);
+			    					NIFWriter.addCoreferenceAnnotation(nifModel, startIndex, endIndex, cm.mentionSpan, existingEntityURI, existingTaIdentRef);
 			    					System.out.println("referrer:" + cm.mentionSpan);
 			    					System.out.println("referree:" + nifString.substring(Integer.parseInt(existingIndex.split("_")[0]), Integer.parseInt(existingIndex.split("_")[1])));
 			    					System.out.println("in sentence:" + document.get(CoreAnnotations.SentencesAnnotation.class).get(cm.sentNum-1));
 			    					System.out.println("\n");
 			    					
 			    		            //System.out.println("in sentence:" + document.get(CoreAnnotations.SentencesAnnotation.class).get(cm.sentNum-1));
-			    		            String temp = "";
-			    		            for (int j  = Integer.max(0, cm.sentNum-1 -3) ; j < Integer.min(document.get(CoreAnnotations.SentencesAnnotation.class).size(), cm.sentNum-1 + 3); j++){
-			    		             temp += document.get(CoreAnnotations.SentencesAnnotation.class).get(j) + "\n";
-			    		            }
+//			    		            String temp = "";
+//			    		            for (int j  = Integer.max(0, cm.sentNum-1 -3) ; j < Integer.min(document.get(CoreAnnotations.SentencesAnnotation.class).size(), cm.sentNum-1 + 3); j++){
+//			    		             temp += document.get(CoreAnnotations.SentencesAnnotation.class).get(j) + "\n";
+//			    		            }
 			    		            
-			    		            System.out.println("somewhere in the context of...:" + temp);
-			    		            System.out.println("\n");
+//			    		            System.out.println("somewhere in the context of...:" + temp);
+//			    		            System.out.println("\n");
 			    				}
 		    				}
 		    			}
