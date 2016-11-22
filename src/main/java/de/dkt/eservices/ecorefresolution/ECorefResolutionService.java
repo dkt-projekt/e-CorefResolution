@@ -38,7 +38,7 @@ public class ECorefResolutionService {
 	}
 	
 	
-	public Model resolveCoreferences(String textToProcess, String languageParam, RDFConstants.RDFSerialization inFormat)
+	public Model resolveCoreferences(String textToProcess, String languageParam, RDFConstants.RDFSerialization inFormat, String prefix)
 					throws ExternalServiceFailedException, BadRequestException, IOException, Exception {
 		ParameterChecker.checkNotNullOrEmpty(languageParam, "language", logger);
 		
@@ -46,7 +46,7 @@ public class ECorefResolutionService {
 			Model nifModel = null;
 			if (inFormat.equals(RDFConstants.RDFSerialization.PLAINTEXT)) {
 				nifModel = NIFWriter.initializeOutputModel();
-				NIFWriter.addInitialString(nifModel, textToProcess, DKTNIF.getDefaultPrefix());
+				NIFWriter.addInitialString(nifModel, textToProcess, prefix);
 			} else {
 				try {
 					nifModel = NIFReader.extractModelFromFormatString(textToProcess, inFormat);
