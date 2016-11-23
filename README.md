@@ -2,7 +2,7 @@
 This service links mentions of entities in input. It analyses the input as a whole and constructs chains of words or phrases that refer to the same entity (usually at the start of a chain). For example, in the sentence 'Angela Merkel is currently the chancellor. She may retire next year though.', the 'She' refers to 'Angela Merkel'. Typically, in the NER step, 'Angela Merkel' will be recognized (depending on the model used), but 'She' will not be recognised as an entity. This service links the two and annotates the mention of an already recognized entity with the URI of that entity, as can be seen in the example output below.
 
 ## Endpoint
-http://api.digitale-kuratierung.de/api/e-nlp/CoreferenceResolution
+https://api.digitale-kuratierung.de/api/e-nlp/CoreferenceResolution
 
 ## Input
 The available input parameters are:
@@ -75,7 +75,7 @@ curl -X POST  -d "@prefix dktnif: <http://dkt.dfki.de/ontologies/nif#> .
         nif:endIndex          "13"^^xsd:nonNegativeInteger ;
         nif:referenceContext  <http://dkt.dfki.de/documents/#char=0,78> ;
         itsrdf:taClassRef     dbo:Person ;
-        itsrdf:taIdentRef     <http://dbpedia.org/resource/Angela_Merkel> ." "http://api.digitale-kuratierung.de/api/e-nlp/CoreferenceResolution?language=en&informat=turtle"
+        itsrdf:taIdentRef     <http://dbpedia.org/resource/Angela_Merkel> ." "https://api.digitale-kuratierung.de/api/e-nlp/CoreferenceResolution?language=en&informat=turtle"
 ```
 
 
