@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>de.dkt</groupId>
   <artifactId>e-CorefResolution</artifactId>
-  <version>0.5</version>
+  <version>0.6-SNAPSHOT</version>
   <name>e-CorefResolution</name>
   <description>Coreference resolution service for dkt project</description>
   
@@ -112,6 +112,6 @@
                 <connection>scm:git:git@github.com:dkt-projekt/e-CorefResolution.git</connection>
                 <url>scm:git:git@github.com/dkt-projekt/e-CorefResolution.git</url>
                 <developerConnection>scm:git:git@github.com:dkt-projekt/e-CorefResolution.git</developerConnection>
-                <tag>e-CorefResolution-0.5</tag>
+                <tag>HEAD</tag>
 </scm>
 </project>
